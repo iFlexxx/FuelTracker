@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FuelTracker">
+<meta name="theme-color" content="#080810">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="FuelTracker">
+<title>FuelTracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #080810;
+  --bg-secondary: #0e0e1c;
+  --bg-modal: #13131f;
+  --glass: rgba(255,255,255,0.055);
+  --glass-border: rgba(255,255,255,0.09);
+  --glass-hover: rgba(255,255,255,0.085);
+  --orange: #FF6A00;
+  --orange-2: #FF9A3C;
+  --orange-bg: rgba(255,106,0,0.15);
+  --orange-border: rgba(255,106,0,0.4);
+  --orange-glow: 0 4px 20px rgba(255,106,0,0.35);
+  --text-1: #F2F2F7;
+  --text-2: rgba(242,242,247,0.55);
+  --text-3: rgba(242,242,247,0.28);
+  --red: #FF3B30;
+  --green: #30D158;
+  --blue: #0A84FF;
+  --r-xl: 22px;
+  --r-lg: 18px;
+  --r-md: 14px;
+  --r-sm: 10px;
+  --r-pill: 20px;
+  --nav-h: 84px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg-primary);color:var(--text-1);font-family:'Sora',sans-serif;overflow:hidden}
+body{display:flex;flex-direction:column}
+
+/* ORBs */
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(90px)}
+.orb-1{width:320px;height:320px;background:#FF6A00;opacity:0.18;top:-80px;right:-80px}
+.orb-2{width:280px;height:280px;background:#7B2FFF;opacity:0.13;bottom:100px;left:-100px}
+.orb-3{width:200px;height:200px;background:#FF3B30;opacity:0.08;top:50%;right:-60px}
+
+/* PAGES */
+#app{flex:1;overflow:hidden;position:relative;z-index:1}
+.page{position:absolute;inset:0;bottom:var(--nav-h);overflow-y:auto;overflow-x:hidden;padding:0 16px 24px;display:none;-webkit-overflow-scrolling:touch}
+.page.active{display:block}
+.page::-webkit-scrollbar{display:none}
+
+/* TOP SAFE AREA */
+.page-header{padding-top:calc(env(safe-area-inset-top,20px) + 12px);margin-bottom:8px}
+.page-title{font-size:28px;font-weight:800;background:linear-gradient(135deg,#FF6A00,#FF9A3C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.page-sub{font-size:13px;color:var(--text-2);font-weight:500;margin-top:2px}
+
+/* BOTTOM NAV */
+#bottom-nav{height:var(--nav-h);background:rgba(8,8,16,0.88);backdrop-filter:blur(32px) saturate(2);-webkit-backdrop-filter:blur(32px) saturate(2);border-top:1px solid var(--glass-border);display:flex;align-items:flex-start;padding-top:10px;padding-bottom:var(--safe-b);z-index:100;position:relative}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;transition:all 0.2s}
+.nav-icon{font-size:22px;line-height:1;transition:transform 0.2s}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-3);transition:color 0.2s}
+.nav-item.active .nav-label{color:var(--orange)}
+.nav-item.active .nav-icon{transform:scale(1.1)}
+
+/* GLASS CARD */
+.card{background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border-radius:var(--r-xl);padding:18px;margin-bottom:12px}
+.card-sm{border-radius:var(--r-lg);padding:14px}
+.card.orange-active{background:var(--orange-bg);border-color:var(--orange-border)}
+
+/* SECTION LABEL */
+.section-label{font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-3);margin:18px 0 8px;padding:0 2px}
+
+/* STAT ROW */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:14px;display:flex;flex-direction:column;gap:4px}
+.stat-value{font-size:22px;font-weight:800;color:var(--text-1)}
+.stat-value.orange{background:linear-gradient(135deg,#FF6A00,#FF9A3C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-value.green{color:var(--green)}
+.stat-label{font-size:11px;font-weight:600;color:var(--text-2)}
+
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;letter-spacing:0.4px;transition:all 0.2s;outline:none}
+.btn-primary{background:linear-gradient(135deg,#FF6A00,#FF9A3C);color:#fff;border-radius:var(--r-md);padding:15px 24px;font-size:16px;box-shadow:var(--orange-glow);width:100%}
+.btn-primary:active{transform:scale(0.97);opacity:0.9}
+.btn-secondary{background:var(--glass);border:1px solid var(--glass-border);color:var(--text-1);border-radius:var(--r-md);padding:13px 20px;font-size:14px}
+.btn-ghost{background:transparent;border:1px solid var(--glass-border);color:var(--text-2);border-radius:var(--r-md);padding:10px 16px;font-size:13px}
+.btn-danger{background:rgba(255,59,48,0.15);border:1px solid rgba(255,59,48,0.3);color:var(--red);border-radius:var(--r-md);padding:10px 16px;font-size:13px}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:var(--r-sm)}
+.btn-icon{width:40px;height:40px;border-radius:50%;background:var(--glass);border:1px solid var(--glass-border);color:var(--text-1);font-size:18px}
+
+/* INPUTS */
+.input-group{margin-bottom:14px}
+.input-label{font-size:11px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-2);margin-bottom:6px;display:block}
+.input{width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--glass-border);border-radius:var(--r-md);color:var(--text-1);font-family:'Sora',sans-serif;font-size:15px;font-weight:500;padding:13px 14px;outline:none;transition:border 0.2s;-webkit-appearance:none;appearance:none}
+.input:focus{border-color:rgba(255,106,0,0.5)}
+.input::placeholder{color:var(--text-3)}
+.input-row{display:grid;gap:10px}
+.input-row.cols-2{grid-template-columns:1fr 1fr}
+.input-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+select.input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(242,242,247,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+
+/* FUEL TYPE SELECTOR */
+.fuel-selector{display:flex;gap:8px;margin-bottom:14px}
+.fuel-btn{flex:1;padding:11px 8px;border-radius:var(--r-md);border:1px solid var(--glass-border);background:var(--glass);color:var(--text-2);font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center}
+.fuel-btn.active{background:var(--orange-bg);border-color:var(--orange-border);color:var(--orange-2)}
+
+/* BLEND CALCULATOR CARD */
+.blend-card{background:linear-gradient(135deg,rgba(255,106,0,0.12),rgba(255,154,60,0.08));border:1px solid rgba(255,106,0,0.25);border-radius:var(--r-xl);padding:18px;margin-bottom:14px}
+.blend-title{font-size:13px;font-weight:700;letter-spacing:0.5px;color:var(--orange-2);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.blend-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.blend-label{font-size:13px;color:var(--text-2);font-weight:500}
+.blend-value{font-size:16px;font-weight:800;color:var(--text-1)}
+.blend-highlight{font-size:20px;font-weight:800;background:linear-gradient(135deg,#FF6A00,#FF9A3C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.blend-bar{height:8px;border-radius:4px;background:rgba(255,255,255,0.08);overflow:hidden;margin:10px 0}
+.blend-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#FF6A00,#FF9A3C);transition:width 0.5s cubic-bezier(0.32,0.72,0,1)}
+
+/* BOTTOM SHEET */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.overlay.show{opacity:1;pointer-events:all}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:var(--bg-modal);border-radius:28px 28px 0 0;z-index:201;transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);max-height:92vh;display:flex;flex-direction:column}
+.sheet.show{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:12px auto 4px}
+.sheet-header{padding:8px 20px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sheet-title{font-size:20px;font-weight:800;color:var(--text-1)}
+.sheet-body{flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
+.sheet-body::-webkit-scrollbar{display:none}
+.sheet-footer{padding:12px 20px calc(var(--safe-b) + 12px);flex-shrink:0;border-top:1px solid var(--glass-border)}
+
+/* VEHICLE CARD */
+.vehicle-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-xl);padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.2s}
+.vehicle-card.selected{background:var(--orange-bg);border-color:var(--orange-border)}
+.vehicle-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#FF6A00,#FF9A3C);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.vehicle-info{flex:1;min-width:0}
+.vehicle-name{font-size:16px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vehicle-sub{font-size:12px;color:var(--text-2);font-weight:500;margin-top:2px}
+.vehicle-actions{display:flex;gap:8px}
+
+/* FILLUP LIST */
+.fillup-item{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:background 0.2s}
+.fillup-item:active{background:var(--glass-hover)}
+.fillup-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.dot-e85{background:#FF6A00}
+.dot-sp95{background:#0A84FF}
+.dot-mix{background:linear-gradient(135deg,#FF6A00,#0A84FF)}
+.fillup-main{flex:1;min-width:0}
+.fillup-date{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px}
+.fillup-title{font-size:15px;font-weight:700;color:var(--text-1);margin:2px 0}
+.fillup-sub{font-size:12px;color:var(--text-2)}
+.fillup-cost{text-align:right;flex-shrink:0}
+.fillup-price{font-size:16px;font-weight:800;color:var(--text-1)}
+.fillup-liters{font-size:11px;color:var(--text-2);font-weight:500}
+
+/* PILL */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--r-pill);font-size:11px;font-weight:700;letter-spacing:0.3px}
+.pill-e85{background:rgba(255,106,0,0.15);color:var(--orange-2);border:1px solid rgba(255,106,0,0.3)}
+.pill-sp95{background:rgba(10,132,255,0.15);color:#4DA6FF;border:1px solid rgba(10,132,255,0.3)}
+.pill-mix{background:rgba(123,47,255,0.15);color:#A67FFF;border:1px solid rgba(123,47,255,0.3)}
+.pill-green{background:rgba(48,209,88,0.15);color:var(--green);border:1px solid rgba(48,209,88,0.3)}
+
+/* PHOTO */
+.photo-zone{border:2px dashed var(--glass-border);border-radius:var(--r-lg);padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.photo-zone:active{background:var(--glass)}
+.photo-zone.has-photo{border-style:solid;border-color:rgba(255,106,0,0.3);background:var(--orange-bg)}
+.photo-preview{width:100%;max-height:160px;object-fit:cover;border-radius:var(--r-sm);display:none}
+#photo-input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* DASHBOARD HERO */
+.hero-card{background:linear-gradient(135deg,rgba(255,106,0,0.18),rgba(255,154,60,0.1));border:1px solid rgba(255,106,0,0.25);border-radius:var(--r-xl);padding:22px;margin-bottom:12px;position:relative;overflow:hidden}
+.hero-card::after{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:radial-gradient(circle,rgba(255,106,0,0.3),transparent 70%);pointer-events:none}
+.hero-title{font-size:13px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:rgba(255,154,60,0.8);margin-bottom:6px}
+.hero-value{font-size:42px;font-weight:800;background:linear-gradient(135deg,#FF6A00,#FF9A3C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+.hero-sub{font-size:13px;color:var(--text-2);margin-top:4px;font-weight:500}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-3)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:0.5}
+.empty-text{font-size:15px;font-weight:600;color:var(--text-2)}
+.empty-sub{font-size:13px;margin-top:4px}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--nav-h) + 16px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,50,0.95);border:1px solid var(--glass-border);border-radius:var(--r-pill);padding:12px 20px;font-size:14px;font-weight:600;color:var(--text-1);z-index:999;opacity:0;transition:all 0.3s;white-space:nowrap;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--nav-h) + 16px);right:20px;width:56px;height:56px;background:linear-gradient(135deg,#FF6A00,#FF9A3C);border-radius:50%;box-shadow:0 6px 24px rgba(255,106,0,0.5);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;cursor:pointer;z-index:90;border:none;transition:transform 0.2s}
+.fab:active{transform:scale(0.93)}
+
+/* SAVINGS CARD */
+.savings-card{background:linear-gradient(135deg,rgba(48,209,88,0.1),rgba(48,209,88,0.06));border:1px solid rgba(48,209,88,0.2);border-radius:var(--r-xl);padding:18px;margin-bottom:12px}
+
+/* MONTH SELECTOR */
+.month-selector{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:12px}
+.month-selector::-webkit-scrollbar{display:none}
+.month-pill{flex-shrink:0;padding:7px 14px;border-radius:var(--r-pill);border:1px solid var(--glass-border);background:var(--glass);font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.month-pill.active{background:var(--orange-bg);border-color:var(--orange-border);color:var(--orange-2)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--glass-border);margin:14px 0}
+
+/* LOADING */
+.loading-dots{display:flex;gap:5px;justify-content:center;align-items:center}
+.loading-dots span{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:dot-bounce 1.2s infinite ease-in-out}
+.loading-dots span:nth-child(2){animation-delay:0.2s}
+.loading-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes dot-bounce{0%,80%,100%{transform:scale(0.7);opacity:0.4}40%{transform:scale(1);opacity:1}}
+
+/* ANIMATIONS */
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.card,.stat-card,.fillup-item,.vehicle-card{animation:slideUp 0.4s cubic-bezier(0.32,0.72,0,1) both}
+
+/* RATIO SLIDER */
+.ratio-display{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ratio-label{font-size:13px;color:var(--text-2);font-weight:600}
+.ratio-value{font-size:16px;font-weight:800}
+.ratio-e85{color:var(--orange-2)}
+.ratio-sp95{color:#4DA6FF}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,0.1);outline:none;margin:8px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#FF6A00,#FF9A3C);box-shadow:0 2px 8px rgba(255,106,0,0.5);cursor:pointer}
+
+/* Detail sheet fields */
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-border)}
+.detail-row:last-child{border-bottom:none}
+.detail-key{font-size:13px;color:var(--text-2);font-weight:500}
+.detail-val{font-size:14px;font-weight:700;color:var(--text-1)}
+</style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- App container -->
+<div id="app">
+  <!-- DASHBOARD PAGE -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="page-title">FuelTracker</div>
+          <div class="page-sub" id="dash-vehicle-name">Chargement…</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-icon" onclick="openVehicleSelect()" title="Changer de véhicule">🚗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLEND RECOMMENDATION -->
+    <div id="blend-rec-card" class="blend-card" style="display:none">
+      <div class="blend-title">⚗️ Conseil mélange avant plein</div>
+      <div class="blend-row">
+        <span class="blend-label">E85 restant estimé</span>
+        <span class="blend-value" id="rec-e85-remaining">—</span>
+      </div>
+      <div class="blend-row">
+        <span class="blend-label">SP95 restant estimé</span>
+        <span class="blend-value" id="rec-sp95-remaining">—</span>
+      </div>
+      <div class="blend-row">
+        <span class="blend-label">Ratio actuel dans réservoir</span>
+        <span class="blend-value" id="rec-current-ratio">—</span>
+      </div>
+      <div class="divider" style="margin:10px 0"></div>
+      <div class="blend-row">
+        <span class="blend-label" style="font-weight:700;color:var(--text-1)">Ratio cible</span>
+        <span class="blend-value" id="rec-target-ratio" style="color:var(--orange-2)">—</span>
+      </div>
+      <div style="background:rgba(255,106,0,0.08);border-radius:12px;padding:12px;margin-top:10px">
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:4px">Pour le prochain plein (réservoir plein) tu peux mettre :</div>
+        <div style="font-size:24px;font-weight:800;color:var(--orange-2)" id="rec-e85-max">—</div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:2px" id="rec-e85-advice">—</div>
+      </div>
+    </div>
+
+    <!-- MONTH FILTER -->
+    <div class="month-selector" id="month-selector"></div>
+
+    <!-- HERO STAT -->
+    <div id="hero-card-container"></div>
+
+    <!-- STATS GRID -->
+    <div class="stat-row" id="stats-row-1"></div>
+    <div class="stat-row" id="stats-row-2"></div>
+
+    <!-- SAVINGS -->
+    <div id="savings-card-container"></div>
+
+    <!-- LAST FILLUP -->
+    <div class="section-label">Dernier plein</div>
+    <div id="last-fillup-container"></div>
+  </div>
+
+  <!-- FILLUPS HISTORY PAGE -->
+  <div id="page-history" class="page">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="page-title">Historique</div>
+          <div class="page-sub" id="hist-count">0 plein(s)</div>
+        </div>
+      </div>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ADD FILLUP PAGE -->
+  <div id="page-add" class="page">
+    <div class="page-header">
+      <div class="page-title">Nouveau plein</div>
+      <div class="page-sub">Enregistrer un ravitaillement</div>
+    </div>
+
+    <!-- BLEND CALC CARD -->
+    <div id="add-blend-card" class="blend-card">
+      <div class="blend-title">⚗️ Calculateur de mélange</div>
+      <div style="margin-bottom:10px">
+        <div class="ratio-display">
+          <span class="blend-label">Ratio cible E85</span>
+          <span class="ratio-e85 ratio-value"><span id="ratio-e85-val">30</span>%</span>
+        </div>
+        <input type="range" id="ratio-slider" min="0" max="50" value="30" oninput="onRatioSlide(this.value)">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-3)">
+          <span>0% (100% SP95)</span><span>50% max E85</span>
+        </div>
+      </div>
+      <div class="blend-bar"><div class="blend-bar-fill" id="blend-bar-fill" style="width:30%"></div></div>
+      <div id="blend-calc-result" style="margin-top:8px"></div>
+    </div>
+
+    <!-- VEHICLE SELECT -->
+    <div class="input-group">
+      <label class="input-label">Véhicule</label>
+      <select class="input" id="add-vehicle-sel" onchange="onVehicleChange()"></select>
+    </div>
+
+    <!-- DATE -->
+    <div class="input-group">
+      <label class="input-label">Date</label>
+      <input type="date" class="input" id="add-date">
+    </div>
+
+    <!-- FUEL TYPE -->
+    <div class="input-group">
+      <label class="input-label">Type de plein</label>
+      <div class="fuel-selector">
+        <button class="fuel-btn active" data-type="mix" onclick="setFuelType('mix',this)">🔀 Mixte</button>
+        <button class="fuel-btn" data-type="e85" onclick="setFuelType('e85',this)">🌽 E85 pur</button>
+        <button class="fuel-btn" data-type="sp95" onclick="setFuelType('sp95',this)">⛽ SP95 pur</button>
+      </div>
+    </div>
+
+    <!-- QUANTITIES -->
+    <div id="qty-e85-group" class="input-group">
+      <label class="input-label">Litres E85</label>
+      <input type="number" class="input" id="add-liters-e85" placeholder="ex: 8.5" step="0.1" min="0" oninput="updateBlendCalc()">
+    </div>
+    <div id="qty-sp95-group" class="input-group">
+      <label class="input-label">Litres SP95</label>
+      <input type="number" class="input" id="add-liters-sp95" placeholder="ex: 30.0" step="0.1" min="0" oninput="updateBlendCalc()">
+    </div>
+
+    <!-- PRICES -->
+    <div class="input-row cols-2">
+      <div id="price-e85-group" class="input-group">
+        <label class="input-label">Prix/L E85 (€)</label>
+        <input type="number" class="input" id="add-price-e85" placeholder="0.72" step="0.001" min="0">
+      </div>
+      <div id="price-sp95-group" class="input-group">
+        <label class="input-label">Prix/L SP95 (€)</label>
+        <input type="number" class="input" id="add-price-sp95" placeholder="1.75" step="0.001" min="0">
+      </div>
+    </div>
+
+    <!-- LOCATION -->
+    <div class="input-group">
+      <label class="input-label">Lieu / Station</label>
+      <input type="text" class="input" id="add-location" placeholder="ex: Total Paris 11e">
+    </div>
+
+    <div class="section-label">Données compteur (avant reset)</div>
+
+    <!-- TRIP DATA -->
+    <div class="input-row cols-2">
+      <div class="input-group">
+        <label class="input-label">Distance (km)</label>
+        <input type="number" class="input" id="add-distance" placeholder="ex: 450" oninput="updateBlendCalc()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Conso théorique (L)</label>
+        <input type="number" class="input" id="add-conso-theo" placeholder="ex: 28.4" step="0.1">
+      </div>
+    </div>
+    <div class="input-row cols-2">
+      <div class="input-group">
+        <label class="input-label">Conso moy. (L/100km)</label>
+        <input type="number" class="input" id="add-conso-avg" placeholder="ex: 6.3" step="0.1">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Vit. moyenne (km/h)</label>
+        <input type="number" class="input" id="add-speed-avg" placeholder="ex: 52">
+      </div>
+    </div>
+
+    <!-- TANK LEVEL -->
+    <div class="input-group">
+      <label class="input-label">Niveau réservoir avant plein (%)</label>
+      <input type="range" id="add-tank-level" min="0" max="100" value="10" oninput="onTankLevelChange(this.value);updateBlendCalc()">
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:12px;color:var(--text-3)">Vide</span>
+        <span style="font-size:13px;font-weight:700;color:var(--orange-2)" id="tank-level-display">10%</span>
+        <span style="font-size:12px;color:var(--text-3)">Plein</span>
+      </div>
+    </div>
+
+    <!-- RECEIPT PHOTO -->
+    <div class="section-label">Ticket de caisse</div>
+    <div class="photo-zone" id="photo-zone" onclick="document.getElementById('photo-input').click()">
+      <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="onPhotoChange(event)">
+      <div id="photo-placeholder">
+        <div style="font-size:32px;margin-bottom:8px">📷</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text-2)">Ajouter le ticket</div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:4px">Tap pour prendre une photo</div>
+      </div>
+      <img id="photo-preview" class="photo-preview">
+    </div>
+    <div id="ocr-result" style="display:none;margin-top:10px"></div>
+
+    <div style="margin-top:20px;padding-bottom:16px">
+      <button class="btn btn-primary" onclick="saveFillup()">💾 Enregistrer le plein</button>
+    </div>
+  </div>
+
+  <!-- VEHICLES PAGE -->
+  <div id="page-vehicles" class="page">
+    <div class="page-header">
+      <div class="page-title">Mes Véhicules</div>
+      <div class="page-sub">Gérer ma flotte</div>
+    </div>
+    <div id="vehicles-list"></div>
+    <button class="btn btn-primary" onclick="openAddVehicle()" style="margin-top:8px">+ Ajouter un véhicule</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+  <div class="nav-item active" onclick="switchPage('dashboard',this)">
+    <div class="nav-icon">📊</div>
+    <div class="nav-label">Dashboard</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('history',this)">
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">Historique</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('add',this)">
+    <div class="nav-icon">➕</div>
+    <div class="nav-label">Plein</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('vehicles',this)">
+    <div class="nav-icon">🚗</div>
+    <div class="nav-label">Véhicules</div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<!-- VEHICLE FORM SHEET -->
+<div class="sheet" id="sheet-vehicle">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span class="sheet-title" id="sheet-vehicle-title">Nouveau véhicule</span>
+    <button class="btn btn-ghost btn-sm" onclick="closeSheet('sheet-vehicle')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <input type="hidden" id="v-edit-id">
+    <div class="input-row cols-2">
+      <div class="input-group">
+        <label class="input-label">Marque</label>
+        <input type="text" class="input" id="v-make" placeholder="Peugeot">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Modèle</label>
+        <input type="text" class="input" id="v-model" placeholder="208">
+      </div>
+    </div>
+    <div class="input-row cols-2">
+      <div class="input-group">
+        <label class="input-label">Année</label>
+        <input type="number" class="input" id="v-year" placeholder="2020" min="1990" max="2030">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Réservoir (L)</label>
+        <input type="number" class="input" id="v-tank" placeholder="45" step="1">
+      </div>
+    </div>
+    <div class="input-row cols-2">
+      <div class="input-group">
+        <label class="input-label">Conso officielle (L/100)</label>
+        <input type="number" class="input" id="v-conso" placeholder="5.5" step="0.1">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Surconso E85 (%)</label>
+        <input type="number" class="input" id="v-e85-over" placeholder="27" step="1" min="0" max="50">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Ratio E85 cible (%)</label>
+      <div class="ratio-display" style="margin-bottom:4px">
+        <span style="font-size:13px;color:var(--text-2)">E85 max dans le mélange</span>
+        <span class="ratio-e85 ratio-value"><span id="v-ratio-display">30</span>%</span>
+      </div>
+      <input type="range" id="v-ratio" min="0" max="50" value="30" oninput="document.getElementById('v-ratio-display').textContent=this.value">
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn btn-primary" onclick="saveVehicle()">💾 Enregistrer</button>
+  </div>
+</div>
+
+<!-- FILLUP DETAIL SHEET -->
+<div class="sheet" id="sheet-fillup-detail">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span class="sheet-title">Détail du plein</span>
+    <button class="btn btn-ghost btn-sm" onclick="closeSheet('sheet-fillup-detail')">✕</button>
+  </div>
+  <div class="sheet-body" id="fillup-detail-body"></div>
+  <div class="sheet-footer" style="display:flex;gap:10px">
+    <button class="btn btn-danger" style="flex:1" id="btn-delete-fillup" onclick="deleteFillup()">🗑 Supprimer</button>
+  </div>
+</div>
+
+<!-- VEHICLE SELECT SHEET -->
+<div class="sheet" id="sheet-vehicle-select">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span class="sheet-title">Choisir un véhicule</span>
+    <button class="btn btn-ghost btn-sm" onclick="closeSheet('sheet-vehicle-select')">✕</button>
+  </div>
+  <div class="sheet-body" id="vehicle-select-body"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================
+// DATA LAYER
+// ============================
+const DB = {
+  get(k,d=null){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
+  set(k,v){localStorage.setItem(k,JSON.stringify(v))},
+};
+
+let state = {
+  vehicles: DB.get('ft_vehicles',[]),
+  fillups: DB.get('ft_fillups',[]),
+  activeVehicleId: DB.get('ft_active_vehicle',null),
+  selectedMonth: 'all',
+  currentFuelType: 'mix',
+  currentFillupId: null,
+  pendingPhoto: null,
+};
+
+function save(){
+  DB.set('ft_vehicles',state.vehicles);
+  DB.set('ft_fillups',state.fillups);
+  DB.set('ft_active_vehicle',state.activeVehicleId);
+}
+
+function getActiveVehicle(){
+  if(!state.vehicles.length) return null;
+  return state.vehicles.find(v=>v.id===state.activeVehicleId)||state.vehicles[0];
+}
+
+function getFillupsByVehicle(vid){
+  return state.fillups.filter(f=>f.vehicleId===vid).sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+
+// ============================
+// NAVIGATION
+// ============================
+function switchPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  if(name==='dashboard') renderDashboard();
+  if(name==='history') renderHistory();
+  if(name==='add') initAddForm();
+  if(name==='vehicles') renderVehicles();
+}
+
+// ============================
+// TOAST
+// ============================
+function toast(msg,dur=2500){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),dur);
+}
+
+// ============================
+// SHEET MANAGEMENT
+// ============================
+function openSheet(id){
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById(id).classList.add('show');
+}
+function closeSheet(id){
+  document.getElementById(id).classList.remove('show');
+  const anyOpen=document.querySelectorAll('.sheet.show');
+  if(!anyOpen.length) document.getElementById('overlay').classList.remove('show');
+}
+function closeAllSheets(){
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('show'));
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ============================
+// VEHICLES
+// ============================
+function openAddVehicle(id=null){
+  const v=id?state.vehicles.find(x=>x.id===id):null;
+  document.getElementById('sheet-vehicle-title').textContent=v?'Modifier le véhicule':'Nouveau véhicule';
+  document.getElementById('v-edit-id').value=v?v.id:'';
+  document.getElementById('v-make').value=v?v.make:'';
+  document.getElementById('v-model').value=v?v.model:'';
+  document.getElementById('v-year').value=v?v.year:'';
+  document.getElementById('v-tank').value=v?v.tank:'';
+  document.getElementById('v-conso').value=v?v.conso:'';
+  document.getElementById('v-e85-over').value=v?v.e85Over:27;
+  document.getElementById('v-ratio').value=v?v.targetRatio:30;
+  document.getElementById('v-ratio-display').textContent=v?v.targetRatio:30;
+  openSheet('sheet-vehicle');
+}
+
+function saveVehicle(){
+  const id=document.getElementById('v-edit-id').value;
+  const v={
+    id:id||uid(),
+    make:document.getElementById('v-make').value.trim()||'Véhicule',
+    model:document.getElementById('v-model').value.trim()||'',
+    year:parseInt(document.getElementById('v-year').value)||new Date().getFullYear(),
+    tank:parseFloat(document.getElementById('v-tank').value)||50,
+    conso:parseFloat(document.getElementById('v-conso').value)||7,
+    e85Over:parseInt(document.getElementById('v-e85-over').value)||27,
+    targetRatio:parseInt(document.getElementById('v-ratio').value)||30,
+  };
+  if(id){
+    const i=state.vehicles.findIndex(x=>x.id===id);
+    if(i>=0) state.vehicles[i]=v;
+  } else {
+    state.vehicles.push(v);
+    if(!state.activeVehicleId) state.activeVehicleId=v.id;
+  }
+  save();
+  closeSheet('sheet-vehicle');
+  renderVehicles();
+  toast('✅ Véhicule enregistré');
+}
+
+function deleteVehicle(id){
+  if(!confirm('Supprimer ce véhicule et tous ses pleins ?')) return;
+  state.vehicles=state.vehicles.filter(v=>v.id!==id);
+  state.fillups=state.fillups.filter(f=>f.vehicleId!==id);
+  if(state.activeVehicleId===id) state.activeVehicleId=state.vehicles[0]?.id||null;
+  save();renderVehicles();toast('🗑 Véhicule supprimé');
+}
+
+function renderVehicles(){
+  const el=document.getElementById('vehicles-list');
+  if(!state.vehicles.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-text">Aucun véhicule</div><div class="empty-sub">Ajoutez votre premier véhicule</div></div>`;return;
+  }
+  el.innerHTML=state.vehicles.map(v=>{
+    const fills=getFillupsByVehicle(v.id).length;
+    const active=v.id===state.activeVehicleId;
+    return `<div class="vehicle-card ${active?'selected':''}" onclick="selectVehicle('${v.id}')">
+      <div class="vehicle-icon">🚗</div>
+      <div class="vehicle-info">
+        <div class="vehicle-name">${v.make} ${v.model}</div>
+        <div class="vehicle-sub">${v.year} · ${v.tank}L · ${fills} plein(s)</div>
+        <div class="vehicle-sub" style="margin-top:2px">Cible E85: ${v.targetRatio}% · Surconso: +${v.e85Over}%</div>
+      </div>
+      <div class="vehicle-actions">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAddVehicle('${v.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteVehicle('${v.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectVehicle(id){
+  state.activeVehicleId=id;save();
+  renderVehicles();renderDashboard();
+  toast('✅ Véhicule sélectionné');
+}
+
+function openVehicleSelect(){
+  const body=document.getElementById('vehicle-select-body');
+  if(!state.vehicles.length){
+    body.innerHTML=`<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-text">Aucun véhicule</div></div>`;
+  } else {
+    body.innerHTML=state.vehicles.map(v=>`
+      <div class="vehicle-card ${v.id===state.activeVehicleId?'selected':''}" onclick="selectVehicle('${v.id}');closeAllSheets()">
+        <div class="vehicle-icon">🚗</div>
+        <div class="vehicle-info">
+          <div class="vehicle-name">${v.make} ${v.model}</div>
+          <div class="vehicle-sub">${v.year} · Cible E85: ${v.targetRatio}%</div>
+        </div>
+      </div>`).join('');
+  }
+  openSheet('sheet-vehicle-select');
+}
+
+// ============================
+// BLEND CALCULATOR
+// ============================
+function calcBlend(vehicle, fillups, tankLevelPct, targetRatio){
+  if(!vehicle) return null;
+  const tank=vehicle.tank;
+  const fuelInTank=tank*(tankLevelPct/100);
+  
+  // Estimate current E85 in tank from last fillup's mix
+  let e85InTank=0;
+  const vFills=getFillupsByVehicle(vehicle.id);
+  if(vFills.length>0){
+    const last=vFills[0];
+    const totalLast=(last.litersE85||0)+(last.litersSP95||0);
+    const e85Ratio=totalLast>0?(last.litersE85||0)/totalLast:0;
+    e85InTank=fuelInTank*e85Ratio;
+  }
+  const sp95InTank=fuelInTank-e85InTank;
+  const toFill=tank-fuelInTank;
+  const ratio=targetRatio/100;
+  // Target: (e85InTank + e85Added) / (tank) = ratio
+  let e85ToAdd=ratio*tank - e85InTank;
+  e85ToAdd=Math.max(0,Math.min(e85ToAdd,toFill));
+  const sp95ToAdd=toFill-e85ToAdd;
+  const currentRatioPct=fuelInTank>0?Math.round((e85InTank/fuelInTank)*100):0;
+
+  return {
+    fuelInTank:fuelInTank.toFixed(1),
+    e85InTank:e85InTank.toFixed(1),
+    sp95InTank:sp95InTank.toFixed(1),
+    toFill:toFill.toFixed(1),
+    e85ToAdd:Math.max(0,e85ToAdd).toFixed(1),
+    sp95ToAdd:Math.max(0,sp95ToAdd).toFixed(1),
+    currentRatioPct,
+  };
+}
+
+function onRatioSlide(v){
+  document.getElementById('ratio-e85-val').textContent=v;
+  document.getElementById('blend-bar-fill').style.width=v*2+'%';
+  updateBlendCalc();
+}
+
+function onTankLevelChange(v){
+  document.getElementById('tank-level-display').textContent=v+'%';
+}
+
+function updateBlendCalc(){
+  const veh=getActiveVehicle();
+  if(!veh) return;
+  const tankLevel=parseInt(document.getElementById('add-tank-level').value)||10;
+  const targetRatio=parseInt(document.getElementById('ratio-slider').value)||30;
+  const b=calcBlend(veh,state.fillups,tankLevel,targetRatio);
+  if(!b) return;
+  const resultEl=document.getElementById('blend-calc-result');
+  resultEl.innerHTML=`
+    <div class="blend-row"><span class="blend-label">Réservoir actuel</span><span class="blend-value">${b.fuelInTank} L (${tankLevel}%)</span></div>
+    <div class="blend-row"><span class="blend-label">E85 estimé dans réservoir</span><span class="blend-value" style="color:var(--orange-2)">${b.e85InTank} L</span></div>
+    <div class="blend-row"><span class="blend-label">Ratio E85 actuel</span><span class="blend-value">${b.currentRatioPct}%</span></div>
+    <div style="background:rgba(255,106,0,0.1);border-radius:12px;padding:12px;margin-top:10px">
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:6px">Pour atteindre ${targetRatio}% E85 (plein complet) :</div>
+      <div style="display:flex;gap:12px">
+        <div><div class="blend-highlight">${b.e85ToAdd} L</div><div style="font-size:11px;color:var(--text-3)">E85 🌽</div></div>
+        <div style="color:var(--text-3);font-size:20px;align-self:center">+</div>
+        <div><div style="font-size:20px;font-weight:800;color:#4DA6FF">${b.sp95ToAdd} L</div><div style="font-size:11px;color:var(--text-3)">SP95 ⛽</div></div>
+      </div>
+    </div>`;
+}
+
+// ============================
+// ADD FILLUP FORM
+// ============================
+function initAddForm(){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('add-date').value=today;
+  
+  // Populate vehicle select
+  const sel=document.getElementById('add-vehicle-sel');
+  sel.innerHTML=state.vehicles.length?state.vehicles.map(v=>`<option value="${v.id}" ${v.id===state.activeVehicleId?'selected':''}>${v.make} ${v.model} (${v.year})</option>`).join(''):'<option value="">Aucun véhicule</option>';
+  
+  // Set ratio slider from active vehicle
+  const veh=getActiveVehicle();
+  if(veh){
+    document.getElementById('ratio-slider').value=veh.targetRatio;
+    document.getElementById('ratio-e85-val').textContent=veh.targetRatio;
+    document.getElementById('blend-bar-fill').style.width=(veh.targetRatio*2)+'%';
+  }
+  
+  setFuelType(state.currentFuelType,document.querySelector(`.fuel-btn[data-type="${state.currentFuelType}"]`));
+  updateBlendCalc();
+  
+  // Reset photo
+  state.pendingPhoto=null;
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('photo-placeholder').style.display='block';
+  document.getElementById('photo-zone').classList.remove('has-photo');
+  document.getElementById('ocr-result').style.display='none';
+}
+
+function onVehicleChange(){
+  const id=document.getElementById('add-vehicle-sel').value;
+  state.activeVehicleId=id;
+  const veh=getActiveVehicle();
+  if(veh){
+    document.getElementById('ratio-slider').value=veh.targetRatio;
+    document.getElementById('ratio-e85-val').textContent=veh.targetRatio;
+    document.getElementById('blend-bar-fill').style.width=(veh.targetRatio*2)+'%';
+  }
+  updateBlendCalc();
+}
+
+function setFuelType(type,el){
+  state.currentFuelType=type;
+  document.querySelectorAll('.fuel-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  
+  const showE85=type==='mix'||type==='e85';
+  const showSP=type==='mix'||type==='sp95';
+  document.getElementById('qty-e85-group').style.display=showE85?'block':'none';
+  document.getElementById('qty-sp95-group').style.display=showSP?'block':'none';
+  document.getElementById('price-e85-group').style.display=showE85?'block':'none';
+  document.getElementById('price-sp95-group').style.display=showSP?'block':'none';
+}
+
+function saveFillup(){
+  const veh=getActiveVehicle();
+  if(!veh){toast('⚠️ Ajoutez d\'abord un véhicule');return;}
+  const date=document.getElementById('add-date').value;
+  if(!date){toast('⚠️ Sélectionnez une date');return;}
+  
+  const type=state.currentFuelType;
+  const litersE85=type==='sp95'?0:parseFloat(document.getElementById('add-liters-e85').value)||0;
+  const litersSP95=type==='e85'?0:parseFloat(document.getElementById('add-liters-sp95').value)||0;
+  const totalL=litersE85+litersSP95;
+  if(totalL<=0){toast('⚠️ Entrez la quantité de carburant');return;}
+  
+  const priceE85=type==='sp95'?0:parseFloat(document.getElementById('add-price-e85').value)||0;
+  const priceSP95=type==='e85'?0:parseFloat(document.getElementById('add-price-sp95').value)||0;
+  const totalCost=litersE85*priceE85+litersSP95*priceSP95;
+  
+  const f={
+    id:uid(),
+    vehicleId:veh.id,
+    date,
+    type,
+    litersE85,litersSP95,totalL,
+    priceE85,priceSP95,totalCost,
+    location:document.getElementById('add-location').value.trim(),
+    distance:parseFloat(document.getElementById('add-distance').value)||0,
+    consoTheo:parseFloat(document.getElementById('add-conso-theo').value)||0,
+    consoAvg:parseFloat(document.getElementById('add-conso-avg').value)||0,
+    speedAvg:parseFloat(document.getElementById('add-speed-avg').value)||0,
+    tankLevel:parseInt(document.getElementById('add-tank-level').value)||0,
+    targetRatio:parseInt(document.getElementById('ratio-slider').value)||veh.targetRatio,
+    photo:state.pendingPhoto||null,
+    createdAt:Date.now(),
+  };
+  
+  state.fillups.push(f);save();
+  toast('✅ Plein enregistré !');
+  
+  // Reset form fields
+  document.getElementById('add-liters-e85').value='';
+  document.getElementById('add-liters-sp95').value='';
+  document.getElementById('add-price-e85').value='';
+  document.getElementById('add-price-sp95').value='';
+  document.getElementById('add-location').value='';
+  document.getElementById('add-distance').value='';
+  document.getElementById('add-conso-theo').value='';
+  document.getElementById('add-conso-avg').value='';
+  document.getElementById('add-speed-avg').value='';
+  state.pendingPhoto=null;
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('photo-placeholder').style.display='block';
+  document.getElementById('photo-zone').classList.remove('has-photo');
+  document.getElementById('ocr-result').style.display='none';
+  
+  // Go to dashboard
+  switchPage('dashboard',document.querySelector('.nav-item:first-child'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.nav-item:first-child').classList.add('active');
+}
+
+// ============================
+// PHOTO / OCR
+// ============================
+function onPhotoChange(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const base64=e.target.result;
+    state.pendingPhoto=base64;
+    const preview=document.getElementById('photo-preview');
+    preview.src=base64;preview.style.display='block';
+    document.getElementById('photo-placeholder').style.display='none';
+    document.getElementById('photo-zone').classList.add('has-photo');
+    analyzeReceipt(base64);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeReceipt(base64){
+  const resultEl=document.getElementById('ocr-result');
+  resultEl.style.display='block';
+  resultEl.innerHTML=`<div class="card card-sm" style="margin-top:0"><div class="blend-title">🔍 Analyse du ticket…</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+  
+  try{
+    const imageData=base64.split(',')[1];
+    const mediaType=base64.split(';')[0].split(':')[1];
+    
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mediaType,data:imageData}},
+            {type:'text',text:`Tu es un assistant qui analyse des tickets de caisse de station-service. Extrait les informations suivantes si présentes, et réponds UNIQUEMENT en JSON valide sans backticks ni commentaires:
+{"litersE85":null,"litersSP95":null,"priceE85":null,"priceSP95":null,"totalCost":null,"location":null,"date":null}
+- litersE85 : nombre de litres d'E85 (ou bioéthanol) servis (float ou null)
+- litersSP95 : nombre de litres de SP95 servis (float ou null)  
+- priceE85 : prix au litre E85 en euros (float ou null)
+- priceSP95 : prix au litre SP95 en euros (float ou null)
+- totalCost : montant total en euros (float ou null)
+- location : nom de la station ou adresse (string ou null)
+- date : date au format YYYY-MM-DD (string ou null)
+Réponds uniquement avec le JSON.`}
+          ]
+        }]
+      })
+    });
+    
+    const data=await resp.json();
+    const text=data.content?.find(c=>c.type==='text')?.text||'{}';
+    const info=JSON.parse(text);
+    
+    let filled=[];
+    if(info.litersE85&&state.currentFuelType!=='sp95'){document.getElementById('add-liters-e85').value=info.litersE85;filled.push('Litres E85');}
+    if(info.litersSP95&&state.currentFuelType!=='e85'){document.getElementById('add-liters-sp95').value=info.litersSP95;filled.push('Litres SP95');}
+    if(info.priceE85){document.getElementById('add-price-e85').value=info.priceE85;filled.push('Prix E85');}
+    if(info.priceSP95){document.getElementById('add-price-sp95').value=info.priceSP95;filled.push('Prix SP95');}
+    if(info.location){document.getElementById('add-location').value=info.location;filled.push('Station');}
+    if(info.date){document.getElementById('add-date').value=info.date;filled.push('Date');}
+    
+    resultEl.innerHTML=filled.length>0
+      ?`<div class="card card-sm" style="margin-top:0;border-color:rgba(48,209,88,0.3);background:rgba(48,209,88,0.08)"><div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:4px">✅ Ticket analysé</div><div style="font-size:12px;color:var(--text-2)">Champs remplis : ${filled.join(', ')}</div></div>`
+      :`<div class="card card-sm" style="margin-top:0"><div style="font-size:13px;color:var(--text-2)">ℹ️ Ticket archivé mais informations non détectées — vérifiez la netteté de la photo.</div></div>`;
+  }catch(e){
+    resultEl.innerHTML=`<div class="card card-sm" style="margin-top:0"><div style="font-size:13px;color:var(--text-2)">📷 Photo archivée. Analyse indisponible.</div></div>`;
+  }
+  updateBlendCalc();
+}
+
+// ============================
+// HISTORY
+// ============================
+function renderHistory(){
+  const veh=getActiveVehicle();
+  const fills=veh?getFillupsByVehicle(veh.id):[];
+  document.getElementById('hist-count').textContent=`${fills.length} plein(s)${veh?' — '+veh.make+' '+veh.model:''}`;
+  const el=document.getElementById('history-list');
+  if(!fills.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">⛽</div><div class="empty-text">Aucun plein enregistré</div><div class="empty-sub">Ajoutez votre premier plein</div></div>`;return;
+  }
+  el.innerHTML=fills.map(f=>{
+    const label=f.type==='e85'?'E85 pur':f.type==='sp95'?'SP95 pur':`E85+SP95`;
+    const dotClass=f.type==='e85'?'dot-e85':f.type==='sp95'?'dot-sp95':'dot-mix';
+    const pillClass=f.type==='e85'?'pill-e85':f.type==='sp95'?'pill-sp95':'pill-mix';
+    const dt=new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+    return `<div class="fillup-item" onclick="showFillupDetail('${f.id}')">
+      <div class="fillup-dot ${dotClass}"></div>
+      <div class="fillup-main">
+        <div class="fillup-date">${dt}</div>
+        <div class="fillup-title">${f.location||'Station inconnue'}</div>
+        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+          <span class="pill ${pillClass}">${label}</span>
+          ${f.distance>0?`<span class="pill" style="background:var(--glass);border:1px solid var(--glass-border);color:var(--text-2)">📍 ${f.distance} km</span>`:''}
+        </div>
+      </div>
+      <div class="fillup-cost">
+        <div class="fillup-price">${f.totalCost.toFixed(2)} €</div>
+        <div class="fillup-liters">${f.totalL.toFixed(1)} L</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showFillupDetail(id){
+  const f=state.fillups.find(x=>x.id===id);
+  if(!f) return;
+  state.currentFillupId=id;
+  const veh=state.vehicles.find(v=>v.id===f.vehicleId);
+  const dt=new Date(f.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const label=f.type==='e85'?'E85 pur 🌽':f.type==='sp95'?'SP95 pur ⛽':'Mixte E85+SP95 🔀';
+  
+  // Savings calc
+  let savingsHtml='';
+  if(veh && (f.litersE85>0)){
+    const overPct=veh.e85Over/100;
+    const e85ConsumptionFactor=1+overPct;
+    // Cost if had used SP95 for the E85 portion
+    const sp95EquivL=f.litersE85*e85ConsumptionFactor;
+    const sp95Price=f.priceSP95||f.priceE85*2.4||1.75;
+    const costIfAllSP95=(sp95EquivL*sp95Price)+((f.litersSP95||0)*sp95Price);
+    const saving=costIfAllSP95-f.totalCost;
+    savingsHtml=`<div class="detail-row"><span class="detail-key">💚 Économie E85 vs SP95</span><span class="detail-val" style="color:var(--green)">${saving>0?'+'+saving.toFixed(2):saving.toFixed(2)} €</span></div>`;
+  }
+  
+  const body=document.getElementById('fillup-detail-body');
+  body.innerHTML=`
+    ${f.photo?`<img src="${f.photo}" style="width:100%;max-height:180px;object-fit:cover;border-radius:${getComputedStyle(document.documentElement).getPropertyValue('--r-lg')};margin-bottom:14px">`:''}
+    <div class="card card-sm" style="margin-bottom:12px">
+      <div class="detail-row"><span class="detail-key">📅 Date</span><span class="detail-val">${dt}</span></div>
+      <div class="detail-row"><span class="detail-key">🚗 Véhicule</span><span class="detail-val">${veh?veh.make+' '+veh.model:'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">⛽ Type</span><span class="detail-val">${label}</span></div>
+      <div class="detail-row"><span class="detail-key">📍 Station</span><span class="detail-val">${f.location||'—'}</span></div>
+    </div>
+    <div class="card card-sm" style="margin-bottom:12px">
+      ${f.litersE85>0?`<div class="detail-row"><span class="detail-key">🌽 E85</span><span class="detail-val">${f.litersE85} L @ ${f.priceE85.toFixed(3)} €/L</span></div>`:''}
+      ${f.litersSP95>0?`<div class="detail-row"><span class="detail-key">⛽ SP95</span><span class="detail-val">${f.litersSP95} L @ ${f.priceSP95.toFixed(3)} €/L</span></div>`:''}
+      <div class="detail-row"><span class="detail-key">📊 Total</span><span class="detail-val">${f.totalL.toFixed(1)} L — ${f.totalCost.toFixed(2)} €</span></div>
+      <div class="detail-row"><span class="detail-key">🎯 Ratio E85</span><span class="detail-val">${f.totalL>0?Math.round((f.litersE85/f.totalL)*100):0}%</span></div>
+    </div>
+    ${f.distance>0||f.consoAvg>0?`<div class="card card-sm" style="margin-bottom:12px">
+      ${f.distance>0?`<div class="detail-row"><span class="detail-key">📍 Distance</span><span class="detail-val">${f.distance} km</span></div>`:''}
+      ${f.consoTheo>0?`<div class="detail-row"><span class="detail-key">🔢 Conso théorique</span><span class="detail-val">${f.consoTheo} L</span></div>`:''}
+      ${f.consoAvg>0?`<div class="detail-row"><span class="detail-key">📈 Conso moy.</span><span class="detail-val">${f.consoAvg} L/100km</span></div>`:''}
+      ${f.speedAvg>0?`<div class="detail-row"><span class="detail-key">🏎 Vitesse moy.</span><span class="detail-val">${f.speedAvg} km/h</span></div>`:''}
+    </div>`:''}
+    ${savingsHtml?`<div class="savings-card"><div class="detail-row" style="border:none;padding:0">${savingsHtml.replace('<div class="detail-row">','').replace('</div>','')}</div></div>`:''}`;
+  
+  openSheet('sheet-fillup-detail');
+}
+
+function deleteFillup(){
+  if(!confirm('Supprimer ce plein ?')) return;
+  state.fillups=state.fillups.filter(f=>f.id!==state.currentFillupId);
+  save();closeAllSheets();renderHistory();renderDashboard();toast('🗑 Plein supprimé');
+}
+
+// ============================
+// DASHBOARD
+// ============================
+function renderDashboard(){
+  const veh=getActiveVehicle();
+  document.getElementById('dash-vehicle-name').textContent=veh?`${veh.make} ${veh.model} · ${veh.year}`:'Aucun véhicule — ajoutez-en un';
+  
+  if(!veh){
+    document.getElementById('hero-card-container').innerHTML=`<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-text">Aucun véhicule configuré</div><div class="empty-sub">Allez dans "Véhicules" pour commencer</div></div>`;
+    document.getElementById('stats-row-1').innerHTML='';
+    document.getElementById('stats-row-2').innerHTML='';
+    document.getElementById('savings-card-container').innerHTML='';
+    document.getElementById('last-fillup-container').innerHTML='';
+    document.getElementById('blend-rec-card').style.display='none';
+    return;
+  }
+  
+  const allFills=getFillupsByVehicle(veh.id);
+  
+  // Month selector
+  buildMonthSelector(allFills);
+  
+  // Filter by month
+  let fills=allFills;
+  if(state.selectedMonth!=='all'){
+    fills=allFills.filter(f=>f.date.startsWith(state.selectedMonth));
+  }
+  
+  // Stats
+  const totalKm=fills.reduce((s,f)=>s+(f.distance||0),0);
+  const totalCost=fills.reduce((s,f)=>s+(f.totalCost||0),0);
+  const totalL=fills.reduce((s,f)=>s+(f.totalL||0),0);
+  const totalE85=fills.reduce((s,f)=>s+(f.litersE85||0),0);
+  const totalSP95=fills.reduce((s,f)=>s+(f.litersSP95||0),0);
+  const avgConso=fills.filter(f=>f.consoAvg>0).reduce((s,f,_,a)=>s+f.consoAvg/a.length,0);
+  
+  // Hero
+  document.getElementById('hero-card-container').innerHTML=`
+    <div class="hero-card">
+      <div class="hero-title">💰 Dépenses totales</div>
+      <div class="hero-value">${totalCost.toFixed(2)} €</div>
+      <div class="hero-sub">${fills.length} plein(s) · ${totalL.toFixed(1)} L · ${totalKm.toFixed(0)} km</div>
+    </div>`;
+  
+  // Stats row 1
+  document.getElementById('stats-row-1').innerHTML=`
+    <div class="stat-card">
+      <div class="stat-value orange">${totalKm.toFixed(0)} km</div>
+      <div class="stat-label">Distance totale</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${totalL.toFixed(1)} L</div>
+      <div class="stat-label">Carburant total</div>
+    </div>`;
+  
+  // Stats row 2
+  const costPerKm=totalKm>0?(totalCost/totalKm):0;
+  document.getElementById('stats-row-2').innerHTML=`
+    <div class="stat-card">
+      <div class="stat-value">${avgConso>0?avgConso.toFixed(1)+'L':'—'}</div>
+      <div class="stat-label">Conso moy. /100km</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${costPerKm>0?costPerKm.toFixed(3)+' €':'—'}</div>
+      <div class="stat-label">Coût par km</div>
+    </div>`;
+  
+  // Savings calculation
+  if(totalE85>0){
+    const overPct=veh.e85Over/100;
+    // If E85 causes X% more consumption, 1L E85 replaces 1/(1+X) L of SP95 in terms of energy
+    // Cost with mix: totalCost
+    // Cost if SP95 only: (totalE85*(1+overPct)*avgPriceSP95) + (totalSP95*avgPriceSP95)
+    const avgPriceSP95=fills.filter(f=>f.priceSP95>0).reduce((s,f,_,a)=>s+f.priceSP95/a.length,0)||1.75;
+    const avgPriceE85=fills.filter(f=>f.priceE85>0).reduce((s,f,_,a)=>s+f.priceE85/a.length,0)||0.72;
+    const costMixed=totalE85*avgPriceE85+totalSP95*avgPriceSP95;
+    const costAllSP95=(totalE85*(1+overPct)+totalSP95)*avgPriceSP95;
+    const saving=costAllSP95-costMixed;
+    document.getElementById('savings-card-container').innerHTML=`
+      <div class="savings-card">
+        <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px">🌿 Économie E85 vs 100% SP95</div>
+        <div class="stat-row" style="margin:0">
+          <div class="stat-card" style="background:transparent;border:none;padding:0">
+            <div class="stat-value green">${saving>0?'+':''} ${saving.toFixed(2)} €</div>
+            <div class="stat-label">Économisé (surconso ${veh.e85Over}%)</div>
+          </div>
+          <div class="stat-card" style="background:transparent;border:none;padding:0">
+            <div class="stat-value" style="font-size:16px">${totalE85.toFixed(1)} L</div>
+            <div class="stat-label">E85 consommé</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-3)">Base: SP95 moy. ${avgPriceSP95.toFixed(3)} €/L · E85 moy. ${avgPriceE85.toFixed(3)} €/L</div>
+      </div>`;
+  } else {
+    document.getElementById('savings-card-container').innerHTML='';
+  }
+  
+  // Last fillup
+  if(allFills.length>0){
+    const last=allFills[0];
+    const dt=new Date(last.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    const label=last.type==='e85'?'E85 pur':last.type==='sp95'?'SP95 pur':'E85+SP95';
+    const pillC=last.type==='e85'?'pill-e85':last.type==='sp95'?'pill-sp95':'pill-mix';
+    document.getElementById('last-fillup-container').innerHTML=`
+      <div class="fillup-item" onclick="showFillupDetail('${last.id}')">
+        <div class="fillup-dot ${last.type==='e85'?'dot-e85':last.type==='sp95'?'dot-sp95':'dot-mix'}"></div>
+        <div class="fillup-main">
+          <div class="fillup-date">${dt}</div>
+          <div class="fillup-title">${last.location||'Station inconnue'}</div>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <span class="pill ${pillC}">${label}</span>
+            ${last.distance>0?`<span class="pill" style="background:var(--glass);border:1px solid var(--glass-border);color:var(--text-2)">📍 ${last.distance} km</span>`:''}
+          </div>
+        </div>
+        <div class="fillup-cost">
+          <div class="fillup-price">${last.totalCost.toFixed(2)} €</div>
+          <div class="fillup-liters">${last.totalL.toFixed(1)} L</div>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('last-fillup-container').innerHTML=`<div class="empty-state" style="padding:20px"><div class="empty-icon">⛽</div><div class="empty-text">Aucun plein enregistré</div></div>`;
+  }
+  
+  // Blend recommendation
+  renderBlendRec(veh, allFills);
+}
+
+function renderBlendRec(veh, allFills){
+  const card=document.getElementById('blend-rec-card');
+  if(!veh||!allFills.length){card.style.display='none';return;}
+  card.style.display='block';
+  
+  // Estimate current tank based on last fillup + distance since
+  const last=allFills[0];
+  const daysSinceFill=(Date.now()-new Date(last.date).getTime())/(1000*60*60*24);
+  // Use average consumption to estimate fuel used
+  const avgCons=allFills.filter(f=>f.consoAvg>0).reduce((s,f,_,a)=>s+f.consoAvg/a.length,0)||veh.conso;
+  // Can't know exact km driven since last fill without more data — use lastTankLevel+liters as reference
+  const fuelAfterLast=Math.min(veh.tank, (last.tankLevel/100)*veh.tank + last.totalL);
+  // Rough estimate: show blendCalc with 20% tank level as default for next fill
+  const tankLevelEst=10; // conservative
+  
+  const b=calcBlend(veh,allFills,tankLevelEst,veh.targetRatio);
+  if(!b){card.style.display='none';return;}
+  
+  document.getElementById('rec-e85-remaining').textContent=b.e85InTank+' L';
+  document.getElementById('rec-sp95-remaining').textContent=b.sp95InTank+' L';
+  document.getElementById('rec-current-ratio').textContent=b.currentRatioPct+'%';
+  document.getElementById('rec-target-ratio').textContent=veh.targetRatio+'% E85 / '+(100-veh.targetRatio)+'% SP95';
+  document.getElementById('rec-e85-max').textContent=b.e85ToAdd+' L E85 + '+b.sp95ToAdd+' L SP95';
+  document.getElementById('rec-e85-advice').textContent=`Pour un plein complet (${veh.tank}L) avec ratio ${veh.targetRatio}/${100-veh.targetRatio}`;
+}
+
+// ============================
+// MONTH SELECTOR
+// ============================
+function buildMonthSelector(fills){
+  const months=new Set();
+  fills.forEach(f=>{const m=f.date.slice(0,7);months.add(m);});
+  const sorted=[...months].sort().reverse();
+  const el=document.getElementById('month-selector');
+  el.innerHTML=`<div class="month-pill ${state.selectedMonth==='all'?'active':''}" onclick="selectMonth('all',this)">Tout</div>`
+    +sorted.map(m=>{
+      const dt=new Date(m+'-01');
+      const label=dt.toLocaleDateString('fr-FR',{month:'short',year:'numeric'});
+      return `<div class="month-pill ${state.selectedMonth===m?'active':''}" onclick="selectMonth('${m}',this)">${label}</div>`;
+    }).join('');
+}
+
+function selectMonth(m,el){
+  state.selectedMonth=m;
+  document.querySelectorAll('.month-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderDashboard();
+}
+
+// ============================
+// INIT
+// ============================
+function init(){
+  // Set today's date default
+  document.getElementById('add-date').value=new Date().toISOString().slice(0,10);
+  
+  // If no vehicles, prompt to add one
+  if(!state.vehicles.length){
+    switchPage('vehicles',null);
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelector('.nav-item:last-child').classList.add('active');
+    setTimeout(()=>{
+      toast('👋 Bienvenue ! Commencez par ajouter un véhicule.',3500);
+    },600);
+  } else {
+    renderDashboard();
+  }
+}
+
+init();
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered', reg.scope))
+      .catch(err => console.log('SW error', err));
+  });
+}
+</script>
+</body>
+</html>
